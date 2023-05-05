@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-java-app
+spec:
+  selector:
+    matchLabels:
+      app: my-java-app
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: my-java-app
+    spec:
+      containers:
+        - name: my-java-app
+          image: my-java-app:latest
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: "1"
+              memory: "512Mi"
+            requests:
+              cpu: "0.5"
+              memory: "256Mi"
+          env:
+            - name: DATABASE_URL
+              value: jdbc:mysql://mysql:3306/mydb
+            - name: DATABASE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: my-secrets
+                  key: database-username
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: my-secrets
+                  key: database-password
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-java-app-service
+spec:
+  selector:
+    app: my-java-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: LoadBalancer
